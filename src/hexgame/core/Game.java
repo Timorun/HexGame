@@ -5,6 +5,8 @@ public class Game {
     private Player playerRed;
     private Player playerBlue;
     private Player currentPlayer;
+    private int previousMove;
+    private boolean canSwap = true;
 
     public Game(String redPlayerName, String bluePlayerName) {
         this.board = new Board();
@@ -27,11 +29,22 @@ public class Game {
     }
 
     public boolean makeMove(int move) {
+        if (move == 81 && canSwap) {  // Check if the move is the special swap move and if a swap is allowed
+            board.swapMove(previousMove);  // Swap the previous move
+            canSwap = false;  // Set the flag to false after performing the swap
+            swapPlayers();
+            return false;  // Continue the game after the swap
+        }
+
         if (board.isValidMove(move)) {
             board.placePiece(move, currentPlayer.getColor());
+            previousMove = move;  // Store this move for potential swap in the next turn
             if (checkWin()) {
                 System.out.println(currentPlayer.getName() + " wins!");
                 return true;
+            }
+            if (currentPlayer == playerBlue && canSwap) {  // If it's the second player's first move
+                canSwap = false;  // Disallow further swaps after this move
             }
             swapPlayers();
         } else {
@@ -44,10 +57,6 @@ public class Game {
         return board.checkWin(currentPlayer.getColor());
     }
 
-    public void swapRule(int move) {
-        board.swapMove(move);
-        swapPlayers();
-    }
 
     public void printBoard() {
         char[][] boardState = board.getCurrentState();
