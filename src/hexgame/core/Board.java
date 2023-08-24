@@ -1,84 +1,95 @@
 package hexgame.core;
 
 public class Board {
-    private final int size;
-    private final Cell[][] board;
+    private final int size = 9;
+    private char[][] board;
+    private final char EMPTY = 'E';
+    private final char RED = 'R';
+    private final char BLUE = 'B';
+    private boolean[][] visited;
 
-    public enum Cell {
-        EMPTY, RED, BLUE
+    public Board() {
+        board = new char[size][size];
+        visited = new boolean[size][size];
+        initializeBoard();
     }
 
-    public Board(int size) {
-        this.size = size;
-        this.board = new Cell[size][size];
+    private void initializeBoard() {
         for (int i = 0; i < size; i++) {
             for (int j = 0; j < size; j++) {
-                board[i][j] = Cell.EMPTY;
+                board[i][j] = EMPTY;
+                visited[i][j] = false;
             }
         }
     }
 
-    public boolean placePiece(int x, int y, Cell player) {
-        if (x < 0 || x >= size || y < 0 || y >= size) {
-            return false;
-        }
-        if (board[x][y] != Cell.EMPTY) {
-            return false;
-        }
-        board[x][y] = player;
-        return true;
+    public boolean isValidMove(int move) {
+        int row = move / size;
+        int col = move % size;
+        return row >= 0 && row < size && col >= 0 && col < size && board[row][col] == EMPTY;
     }
 
-    public Cell getCell(int x, int y) {
-        if (x < 0 || x >= size || y < 0 || y >= size) {
-            return null;
-        }
-        return board[x][y];
-    }
-
-    public boolean hasWinner() {
-        for (int i = 0; i < size; i++) {
-            // Check from top to bottom for BLUE
-            if (dfs(i, 0, Cell.BLUE, new boolean[size][size])) {
-                return true;
-            }
-            // Check from left to right for RED
-            if (dfs(0, i, Cell.RED, new boolean[size][size])) {
-                return true;
-            }
+    public boolean placePiece(int move, char player) {
+        int row = move / size;
+        int col = move % size;
+        if (isValidMove(move)) {
+            board[row][col] = player;
+            return true;
         }
         return false;
     }
 
-    private boolean dfs(int x, int y, Cell player, boolean[][] visited) {
+    private boolean dfs(int x, int y, char player) {
         if (x < 0 || x >= size || y < 0 || y >= size || visited[x][y] || board[x][y] != player) {
             return false;
         }
 
-        // If BLUE reaches the bottom or RED reaches the right, there's a winner
-        if ((player == Cell.BLUE && y == size - 1) || (player == Cell.RED && x == size - 1)) {
+        if ((player == RED && x == size - 1) || (player == BLUE && y == size - 1)) {
             return true;
         }
 
         visited[x][y] = true;
 
-        // Visit neighboring cells
-        int[][] dirs = {{0, 1}, {1, 0}, {0, -1}, {-1, 0}, {-1, 1}, {1, -1}};
-        for (int[] dir : dirs) {
-            int newX = x + dir[0];
-            int newY = y + dir[1];
-            if (dfs(newX, newY, player, visited)) {
-                return true;
+        // Explore neighboring cells
+        return dfs(x + 1, y, player) || dfs(x - 1, y, player) ||
+                dfs(x, y + 1, player) || dfs(x, y - 1, player) ||
+                dfs(x + 1, y - 1, player) || dfs(x - 1, y + 1, player);
+    }
+
+    public boolean checkWin(char player) {
+        for (int i = 0; i < size; i++) {
+            for (int j = 0; j < size; j++) {
+                visited[i][j] = false;
+            }
+        }
+
+        if (player == RED) {
+            for (int i = 0; i < size; i++) {
+                if (board[0][i] == RED && dfs(0, i, RED)) {
+                    return true;
+                }
+            }
+        } else {
+            for (int i = 0; i < size; i++) {
+                if (board[i][0] == BLUE && dfs(i, 0, BLUE)) {
+                    return true;
+                }
             }
         }
 
         return false;
     }
 
-    public static void main(String[] args) {
-        Board board = new Board(11);
-        board.placePiece(5, 5, Cell.RED);
-        System.out.println(board.getCell(5, 5));
-        // Add more test cases to check the functionality of hasWinner()
+    public char[][] getCurrentState() {
+        return board.clone();
+    }
+
+    public void swapMove(int move) {
+        int row = move / size;
+        int col = move % size;
+        if (board[row][col] == RED) {
+            board[row][col] = BLUE;
+            board[col][row] = EMPTY;
+        }
     }
 }
