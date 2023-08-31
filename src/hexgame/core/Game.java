@@ -39,10 +39,6 @@ public class Game {
         if (board.isValidMove(move)) {
             board.placePiece(move, currentPlayer.getColor());
             previousMove = move;  // Store this move for potential swap in the next turn
-            if (checkWin()) {
-                System.out.println(currentPlayer.getName() + " wins!");
-                return true;
-            }
             if (currentPlayer == playerBlue && canSwap) {  // If it's the second player's first move
                 canSwap = false;  // Disallow further swaps after this move
             }
@@ -53,10 +49,12 @@ public class Game {
         return false;
     }
 
-    public boolean checkWin() {
-        return board.checkWin(currentPlayer.getColor());
+    public boolean isGameOver() {
+        swapPlayers();
+        boolean win = board.checkWin(currentPlayer.getColor());
+        swapPlayers();
+        return win;
     }
-
 
     public void printBoard() {
         char[][] boardState = board.getCurrentState();
@@ -66,5 +64,24 @@ public class Game {
             }
             System.out.println();
         }
+    }
+
+    public String getCurrentPlayer() {
+        return currentPlayer.getName();
+    }
+
+
+    public boolean isValidMove(int move) {
+        return board.isValidMove(move);
+    }
+
+    public String getGameOverReason() {
+        //need to handle DC
+        for (int i = 0; i < 81; i++) {
+            if (isValidMove(i)){
+                return "VICTORY";
+            }
+        }
+        return "DRAW";
     }
 }

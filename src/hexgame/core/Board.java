@@ -26,12 +26,7 @@ public class Board {
     public boolean isValidMove(int move) {
         int row = move / size;
         int col = move % size;
-        if (row >= 0 && row < size && col >= 0 && col < size && board[row][col] == EMPTY) {
-            return true;
-        } else if (move == 81 && ) {
-
-        }
-        return false
+        return row >= 0 && row < size && col >= 0 && col < size && board[row][col] == EMPTY;
     }
 
     public boolean placePiece(int move, char player) {
