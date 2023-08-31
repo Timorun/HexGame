@@ -1,50 +1,35 @@
 package hexgame.ai;
 
+import hexgame.core.Board;
+import hexgame.core.Player;
+
 import java.util.List;
 
 public class GreedyAI extends AI {
 
-    public GreedyAI(Board board, char color) {
-        super(board, color);
+    public GreedyAI(Board board, Player player) {
+        super(board, player);
     }
 
     @Override
-    public int getMove() {
-        List<Integer> possibleMoves = board.getAvailableMoves();
-
-        // First Move Strategy: If it's the first move of the game, choose the center.
-        if (possibleMoves.size() == 81) {
-            return 40;  // Center of a 9x9 board
-        }
-
-        // Swap Decision Logic: For the second player's first turn
-        if (possibleMoves.size() == 80) {
-            int normalScore = Integer.MIN_VALUE;
-            int swapScore = Integer.MIN_VALUE;
-
-            for (int move : possibleMoves) {
-                int currentScore = evaluateMove(move);
-                if (currentScore > normalScore) {
-                    normalScore = currentScore;
-                }
-            }
-
-            // Simulate the swap and evaluate its score
-            board.swapMove(board.getPreviousMove());
-            swapScore = evaluateBoard();
-            board.swapMove(board.getPreviousMove());  // Revert the swap for further calculations
-
-            if (swapScore > normalScore) {
-                return 81;  // Return swap move
-            }
-        }
-
+    public int getNextMove() {
+        List<Integer> availableMoves = board.getAvailableMoves();
         int bestMove = -1;
-        int bestScore = Integer.MIN_VALUE;
-        for (int move : possibleMoves) {
-            int score = evaluateMove(move);
-            if (score > bestScore) {
-                bestScore = score;
+        int maxGain = Integer.MIN_VALUE;
+
+        for (int move : availableMoves) {
+            Board cloneBoard = null;
+            try {
+                cloneBoard = board.cloneBoard();
+            } catch (CloneNotSupportedException e) {
+                throw new RuntimeException(e);
+            }
+            cloneBoard.placePiece(move, player.getColor());
+
+            int gain = evaluateBoard(cloneBoard);
+
+            if (gain > maxGain) {
+                maxGain = gain;
                 bestMove = move;
             }
         }
@@ -52,33 +37,28 @@ public class GreedyAI extends AI {
         return bestMove;
     }
 
-    private int evaluateMove(int move) {
-        char opponentColor = (color == Board.RED) ? Board.BLUE : Board.RED;
-        int score = 0;
+    private int evaluateBoard(Board board) {
+        // Evaluate the board based on the strength of the longest path
+        // and the number of pieces the player has on the board.
 
-        // Simulate the move
-        board.placePiece(move, color);
+        int longestpathred = board.findLongestPath(board.RED);
+        int longestpathblue = board.findLongestPath(board.BLUE);
 
-        // Evaluate the board based on the simulated move
-        score = evaluateBoard();
+        int myLongestPath;
+        int opponentLongestPath;
 
-        // Revert the simulated move
-        board.removePiece(move);
-
-        return score;
-    }
-
-    private int evaluateBoard() {
-        int score = 0;
-        for (int i = 0; i < board.getSize(); i++) {
-            for (int j = 0; j < board.getSize(); j++) {
-                if (board.getCell(i, j) == color) {
-                    score += 1;
-                } else if (board.getCell(i, j) != Board.EMPTY) {
-                    score -= 1;
-                }
-            }
+        if (player.getColor() == board.RED) {
+            myLongestPath = longestpathred;
+            opponentLongestPath = longestpathblue;
+        } else {
+            myLongestPath = longestpathblue;
+            opponentLongestPath = longestpathred;
         }
-        return score;
+
+        int myPieces = board.countPieces(player);
+
+        // For this example, we'll just sum these up, but you can apply
+        // any formula you find suitable.
+        return myLongestPath * 2 + myPieces - opponentLongestPath;
     }
 }

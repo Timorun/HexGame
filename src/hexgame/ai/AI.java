@@ -1,32 +1,18 @@
 package hexgame.ai;
 
 import hexgame.core.Board;
+import hexgame.core.Player;
 
-import java.util.ArrayList;
-import java.util.List;
 
+// Abstract AI Class
 public abstract class AI {
     protected Board board;
-    protected char color;
+    protected Player player;
 
-    public AI(Board board, char color) {
+    public AI(Board board, Player player) {
         this.board = board;
-        this.color = color;
+        this.player = player;
     }
 
-    // This method would be overridden by each specific AI strategy
-    public abstract int getMove();
-
-    protected List<Integer> getAvailableMoves() {
-        List<Integer> availableMoves = new ArrayList<>();
-        int size = 9;
-        for (int i = 0; i < size; i++) {
-            for (int j = 0; j < size; j++) {
-                if (board[i][j] == Board.EMPTY) {
-                    availableMoves.add(i * size + j);
-                }
-            }
-        }
-        return availableMoves;
-    }
+    public abstract int getNextMove();
 }

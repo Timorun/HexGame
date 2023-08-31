@@ -1,22 +1,22 @@
 package hexgame.ai;
 
+import hexgame.core.Board;
+import hexgame.core.Player;
+
+import java.util.List;
 import java.util.Random;
 
-public class RandomAI extends AI{
-    private Board board;
-    private char color;
+public class RandomAI extends AI {
+    private Random random;
 
-    public RandomAI(Board board, char color) {
-        this.board = board;
-        this.color = color;
+    public RandomAI(Board board, Player player) {
+        super(board, player);
+        this.random = new Random();
     }
 
-    public int getMove() {
-        Random random = new Random();
-        int move;
-        do {
-            move = random.nextInt(81);  // As there are 81 possible positions on a 9x9 board
-        } while (!board.isValidMove(move));
-        return move;
+    @Override
+    public int getNextMove() {
+        List<Integer> availableMoves = board.getAvailableMoves();
+        return availableMoves.get(random.nextInt(availableMoves.size()));
     }
 }
