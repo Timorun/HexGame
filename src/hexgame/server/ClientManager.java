@@ -34,7 +34,7 @@ public class ClientManager {
             return false; // Invalid username
         }
 
-        System.out.print("New client added with username: "+ username);
+        System.out.println("New client added with username: "+ username);
 
         client.setUsername(username);
         addClient(client);
@@ -43,6 +43,7 @@ public class ClientManager {
 
     public void removeClient(ClientSession client) {
         clients.remove(client);
+        waitingQueue.remove(client);
     }
 
     public void addToQueue(ClientSession client) {
@@ -68,12 +69,29 @@ public class ClientManager {
 
     public void broadcastToGame(Game game, String message) {
         Pair<ClientSession, ClientSession> players = activeGames.get(game);
-        players.first().sendMessage(message);
-        players.second().sendMessage(message);
+        try {
+            players.first().sendMessage(message);
+        }
+        catch(Exception e) {
+        }
+        try {
+            players.second().sendMessage(message);
+        }
+        catch(Exception e) {
+        }
     }
 
     public void endGame(Game game) {
         activeGames.remove(game);
+    }
+
+    public ClientSession getOpponent(Game game, ClientSession clientSession) {
+        Pair<ClientSession, ClientSession> pair = activeGames.get(game);
+        if (pair.first == clientSession) {
+            return pair.second;
+        } else {
+            return pair.first;
+        }
     }
 
     private static class Pair<T, U> {
@@ -97,7 +115,7 @@ public class ClientManager {
     public synchronized List<String> listClients() {
         ArrayList list = new ArrayList<>();
         for (ClientSession c : clients) {
-            list.add(c.getUsername() + "*");
+            list.add(c.getUsername());
         }
         return list;
     }

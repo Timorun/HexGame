@@ -33,7 +33,7 @@ public class Game {
             board.swapMove(previousMove);  // Swap the previous move
             canSwap = false;  // Set the flag to false after performing the swap
             swapPlayers();
-            return false;  // Continue the game after the swap
+            return true;  // Continue the game after the swap
         }
 
         if (board.isValidMove(move)) {
@@ -43,8 +43,7 @@ public class Game {
                 canSwap = false;  // Disallow further swaps after this move
             }
             swapPlayers();
-        } else {
-            System.out.println("Invalid move. Try again.");
+            return true;
         }
         return false;
     }
@@ -71,14 +70,10 @@ public class Game {
     }
 
 
-    public boolean isValidMove(int move) {
-        return board.isValidMove(move);
-    }
-
     public String getGameOverReason() {
         //need to handle DC
         for (int i = 0; i < 81; i++) {
-            if (isValidMove(i)){
+            if (board.isValidMove(i)){
                 return "VICTORY";
             }
         }

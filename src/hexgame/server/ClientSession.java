@@ -14,10 +14,12 @@ public class ClientSession implements Runnable {
     private BufferedReader in;
     private String username;
     private Game currentGame;
+    private boolean isConnected;
 
     public ClientSession(Socket clientSocket, ClientManager manager) {
         this.clientSocket = clientSocket;
         this.clientManager  = manager;
+        this.isConnected = true;
     }
 
     @Override
@@ -55,18 +57,26 @@ public class ClientSession implements Runnable {
             }
 
         } catch (IOException e) {
-            e.printStackTrace();
+            System.out.println("Client Disconnected");
+            if (currentGame != null) {
+                ClientSession opclient = clientManager.getOpponent(currentGame,this);
+                opclient.sendMessage("GAMEOVER~" + "DISCONNECT" + "~" + opclient.getUsername());
+                clientManager.endGame(currentGame);
+                currentGame = null;
+            }
+            clientManager.removeClient(this);
         }
     }
 
 
     private void handleHello(String[] parts) {
-        sendMessage("HELLO~Server by Assistant~CHAT~RANK");
+        sendMessage("HELLO~Server by Timo&GPT");
     }
 
     private void handleLogin(String[] parts) {
-        this.username = parts[1];
-        if (clientManager.registerClient(this, username)) {
+        if (parts.length == 1) {
+            sendError("Unknown command");
+        } else if (clientManager.registerClient(this, parts[1])) {
             sendMessage("LOGIN");
         } else {
             sendMessage("ALREADYLOGGEDIN");
@@ -75,7 +85,7 @@ public class ClientSession implements Runnable {
 
     private void handleList() {
         List<String> clients = clientManager.listClients();
-        sendMessage("LIST~" + String.join("~", clients));
+        sendMessage("LIST~" + String.join("*", clients));
     }
 
     private void handleQueue() {
@@ -99,8 +109,7 @@ public class ClientSession implements Runnable {
         }
 
         if (currentGame.getCurrentPlayer().equals(username)) {
-            if (currentGame.isValidMove(move)) {
-                currentGame.makeMove(move);
+            if (currentGame.makeMove(move)) {
 
                 if (currentGame.isGameOver()) {
                     clientManager.broadcastToGame(currentGame, "GAMEOVER~" + currentGame.getGameOverReason() + "~" + username);
