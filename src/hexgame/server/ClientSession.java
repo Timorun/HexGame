@@ -85,7 +85,7 @@ public class ClientSession implements Runnable {
 
     private void handleList() {
         List<String> clients = clientManager.listClients();
-        sendMessage("LIST~" + String.join("*", clients));
+        sendMessage("LIST~" + String.join("~", clients));
     }
 
     private void handleQueue() {
