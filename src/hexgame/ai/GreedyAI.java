@@ -1,30 +1,31 @@
 package hexgame.ai;
 
 import hexgame.core.Board;
-import hexgame.core.Player;
 
 import java.util.List;
 
 public class GreedyAI extends AI {
 
-    public GreedyAI(Board board, Player player) {
-        super(board, player);
+    char color;
+
+    public GreedyAI(Board board, char mycolor) {
+        super(board);
+        this.color = mycolor;
     }
 
     @Override
     public int getNextMove() {
         List<Integer> availableMoves = board.getAvailableMoves();
         int bestMove = -1;
-        int maxGain = Integer.MIN_VALUE;
+        int maxGain = -1;
+        char[][] fields = board.getCurrentFields();
+        boolean[][] visited = board.getVisited();
+        Board cloneBoard;
+        
 
         for (int move : availableMoves) {
-            Board cloneBoard = null;
-            try {
-                cloneBoard = board.cloneBoard();
-            } catch (CloneNotSupportedException e) {
-                throw new RuntimeException(e);
-            }
-            cloneBoard.placePiece(move, player.getColor());
+            cloneBoard = new Board(fields, visited);
+            cloneBoard.placePiece(move, color);
 
             int gain = evaluateBoard(cloneBoard);
 
@@ -37,17 +38,17 @@ public class GreedyAI extends AI {
         return bestMove;
     }
 
-    private int evaluateBoard(Board board) {
+    private int evaluateBoard(Board cloneboard) {
         // Evaluate the board based on the strength of the longest path
         // and the number of pieces the player has on the board.
 
-        int longestpathred = board.findLongestPath(board.RED);
-        int longestpathblue = board.findLongestPath(board.BLUE);
+        int longestpathred = cloneboard.findLongestPath(cloneboard.RED);
+        int longestpathblue = cloneboard.findLongestPath(cloneboard.BLUE);
 
         int myLongestPath;
         int opponentLongestPath;
 
-        if (player.getColor() == board.RED) {
+        if (color == 'R') {
             myLongestPath = longestpathred;
             opponentLongestPath = longestpathblue;
         } else {
@@ -55,7 +56,7 @@ public class GreedyAI extends AI {
             opponentLongestPath = longestpathred;
         }
 
-        int myPieces = board.countPieces(player);
+        int myPieces = cloneboard.countPieces(color);
 
         // For this example, we'll just sum these up, but you can apply
         // any formula you find suitable.

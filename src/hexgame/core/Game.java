@@ -56,7 +56,7 @@ public class Game {
     }
 
     public void printBoard() {
-        char[][] boardState = board.getCurrentState();
+        char[][] boardState = board.getCurrentFields();
         for (int i = 0; i < boardState.length; i++) {
             for (int j = 0; j < boardState[i].length; j++) {
                 System.out.print(boardState[i][j] + " ");

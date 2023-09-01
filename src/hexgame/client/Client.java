@@ -1,5 +1,10 @@
 package hexgame.client;
 
+import hexgame.ai.AI;
+import hexgame.ai.GreedyAI;
+import hexgame.ai.RandomAI;
+import hexgame.core.Board;
+
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
@@ -17,6 +22,8 @@ public class Client {
     private boolean inGame = false;
     boolean swapmove = false;
 
+    Board aiboard = new Board();
+
     public Client(String ipAddress, int port) throws Exception {
         socket = new Socket(ipAddress, port);
         out = new PrintWriter(socket.getOutputStream(), true);
@@ -28,6 +35,10 @@ public class Client {
     boolean loggedin = false;
     boolean queued = false;
     final Object lock = new Object();
+
+    boolean aichosen = false;
+    boolean useai = false;
+    AI ai = null;
     public void start() throws Exception {
         // Main loop for server commands
         new Thread(() -> {
@@ -56,31 +67,73 @@ public class Client {
             sendCommand("LOGIN~" + username);
         }
 
-
-
         // Main loop for user input
         while (true) {
             scanner = new Scanner(System.in);
-            if (inGame && myturn) {
-                System.out.println("Enter your move or type HINT:");
+            if (inGame && !aichosen) {
+                System.out.println("Do you want the AI to make moves for you?" +
+                        "\nPress 1 for RandomAI, 2 for GreedyAI, or 0 for no AI");
                 String input = scanner.nextLine();
+
                 try {
-                    int move = Integer.parseInt(input);  // Convert string to integer
-                    if (isMoveValid(move)) {
-                        sendCommand("MOVE~" + move);
-                        swapmove = false;
-                    } else {
-                        System.out.println("Invalid move. Please try again.");
+                    int option = Integer.parseInt(input);
+                    switch (option) {
+                        case 1:
+                            System.out.println("Moves will be made by RandomAI");
+                            useai = true;
+                            aichosen = true;
+                            ai = new RandomAI(aiboard);
+                            break;
+
+                        case 2:
+                            System.out.println("Moves will be made by GreedyAI");
+                            useai = true;
+                            aichosen = true;
+                            ai = new GreedyAI(aiboard, mycolor);
+                            break;
+
+                        case 0:
+                            aichosen = true;
+                            System.out.println("No AI chosen");
+                            break;
+
+                        default:
+                            System.out.println("Press 1 for RandomAI, 2 for GreedyAI, or 0 for no AI");
+                            break;
                     }
                 } catch (NumberFormatException e) {
-                    String command = input.toUpperCase();
-                    if ("HINT".equals(command)) {
-                        int hintmove = getHintMove();
-                        System.out.println("Try number:" + hintmove);
-                    } else {
-                        System.out.println("Input a number");
+                    System.out.println("Input a number");
+                }
+                scanner = new Scanner(System.in);
+            }
+
+            if (inGame && myturn && aichosen) {
+                if (useai) {
+                    int move = ai.getNextMove();
+                    sendCommand("MOVE~" + move);
+                    swapmove = false;
+                } else {
+                    System.out.println("Enter your move or type HINT:");
+                    String input = scanner.nextLine();
+                    try {
+                        int move = Integer.parseInt(input);  // Convert string to integer
+                        if (isMoveValid(move)) {
+                            sendCommand("MOVE~" + move);
+                            swapmove = false;
+                        } else {
+                            System.out.println("Invalid move. Please try again.");
+                        }
+                    } catch (NumberFormatException e) {
+                        String command = input.toUpperCase();
+                        if ("HINT".equals(command)) {
+                            int hintmove = getHintMove();
+                            System.out.println("Try number:" + hintmove);
+                        } else {
+                            System.out.println("Input a number");
+                        }
                     }
                 }
+
 
             } else if (!queued) {
                 String command = scanner.nextLine().toUpperCase();
@@ -108,7 +161,7 @@ public class Client {
         }
         int row = move / 9;
         int col = move % 9;
-        return board[row][col] == '.';
+        return clientboard[row][col] == '.';
     }
 
 
@@ -117,7 +170,7 @@ public class Client {
     char opcolor = 'R';
     int lastmove = 0; //to know incase swap move
     private void handleServerCommand(String command) throws Exception {
-        System.out.println(command);
+//        System.out.println(command);
         if (command == null) {
             System.out.println("Error");
             exit(0);
@@ -174,21 +227,21 @@ public class Client {
                     }
                     break;
                 case "MOVE":
-                    System.out.println("Move made: " + parts[1]);
                     int move = Integer.parseInt(parts[1]);
-                    char color;
                     if (myturn) {
+                        System.out.println("Move you did: " + parts[1]);
                         myturn = false;
-                        color = mycolor;
-                        updateBoard(move, color);
+                        updateBoard(move, mycolor);
                         lastmove = move;
                         printBoard();
+                        aiboard.placePiece(move, mycolor);
                     } else {
+                        System.out.println("Move by opponent: " + parts[1]);
                         myturn = true;
-                        color = opcolor;
-                        updateBoard(move, color);
+                        updateBoard(move, opcolor);
                         lastmove = move;
                         printBoard();
+                        aiboard.placePiece(move, opcolor);
                         synchronized (lock) {
                             lock.notifyAll();
                         }
@@ -198,11 +251,19 @@ public class Client {
                     String reason = parts[1];
                     String winner = parts.length > 2 ? parts[2] : "None";
                     System.out.println("Game over. Reason: " + reason + ", Winner: " + winner);
+                    if (winner.equals(username)) {
+                        System.out.println("Congrats you won!");
+                    } else {
+                        System.out.println("You'll get em' next time!");
+                    }
                     inGame = false;
                     myturn = false;
                     mycolor = 'B';
                     opcolor = 'R';
                     queued = false;
+                    useai = false;
+                    aichosen = false;
+                    aiboard = new Board();
                     System.out.println("Enter 'QUEUE' to queue up for a game or 'LIST' to see online users");
                     synchronized (lock) {
                         lock.notifyAll();
@@ -224,10 +285,10 @@ public class Client {
         }
     }
 
-    private char[][] board;
+    private char[][] clientboard;
     public void initBoard() {
-        board = new char[9][9];
-        for (char[] row : board) {
+        clientboard = new char[9][9];
+        for (char[] row : clientboard) {
             Arrays.fill(row, '.'); // Assuming '.' represents an empty cell
         }
     }
@@ -250,10 +311,10 @@ public class Client {
 
             // Print the board cells
             for (int col = 0; col < 9; col++) {
-                if (board[row][col] == '.') {
+                if (clientboard[row][col] == '.') {
                     System.out.print("(" + (cellNumber < 10 ? "0" : "") + cellNumber + ") ");
                 } else {
-                    System.out.print("  " + board[row][col] + "  ");
+                    System.out.print("  " + clientboard[row][col] + "  ");
                 }
                 cellNumber++;
             }
@@ -276,12 +337,12 @@ public class Client {
             move = lastmove;
             int row = move / 9;
             int col = move % 9;
-            board[row][col] = '.';
-            board[col][row] = 'B';
+            clientboard[row][col] = '.';
+            clientboard[col][row] = 'B';
         } else {
             int row = move / 9;
             int col = move % 9;
-            board[row][col] = color;
+            clientboard[row][col] = color;
         }
     }
 
@@ -309,8 +370,8 @@ public class Client {
         // local:  localhost port 8888
 
         try {
-            Client client = new Client("localhost", 8888);
-//            Client client = new Client("130.89.253.64", 44445);
+//            Client client = new Client("localhost", 8888);
+            Client client = new Client("130.89.253.64", 44445);
             client.start();
         } catch (Exception e) {
             e.printStackTrace();

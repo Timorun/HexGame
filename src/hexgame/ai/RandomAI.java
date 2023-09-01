@@ -9,8 +9,8 @@ import java.util.Random;
 public class RandomAI extends AI {
     private Random random;
 
-    public RandomAI(Board board, Player player) {
-        super(board, player);
+    public RandomAI(Board board) {
+        super(board);
         this.random = new Random();
     }
 
