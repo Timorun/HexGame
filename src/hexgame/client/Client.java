@@ -62,9 +62,10 @@ public class Client {
         while (true) {
             scanner = new Scanner(System.in);
             if (inGame && myturn) {
-                System.out.println("Enter your move: ");
+                System.out.println("Enter your move or type HINT:");
+                String input = scanner.nextLine();
                 try {
-                    int move = Integer.parseInt(scanner.nextLine());  // Convert string to integer
+                    int move = Integer.parseInt(input);  // Convert string to integer
                     if (isMoveValid(move)) {
                         sendCommand("MOVE~" + move);
                         swapmove = false;
@@ -72,7 +73,13 @@ public class Client {
                         System.out.println("Invalid move. Please try again.");
                     }
                 } catch (NumberFormatException e) {
-                    System.out.println("Input a number");
+                    String command = input.toUpperCase();
+                    if ("HINT".equals(command)) {
+                        int hintmove = getHintMove();
+                        System.out.println("Try number:" + hintmove);
+                    } else {
+                        System.out.println("Input a number");
+                    }
                 }
 
             } else if (!queued) {
@@ -227,18 +234,42 @@ public class Client {
 
     public void printBoard() {
         int cellNumber = 0;
+
+        // Print the top RED border
+        System.out.println("                     RED");
+
+        // Start of the board
+        String blue = "BLUE";
         for (int row = 0; row < 9; row++) {
+            // Print the left BLUE border
+            if (row >= 3 && row <= 6) {
+                System.out.print(blue.charAt(row - 3) + " ");
+            } else {
+                System.out.print("  ");
+            }
+
+            // Print the board cells
             for (int col = 0; col < 9; col++) {
                 if (board[row][col] == '.') {
                     System.out.print("(" + (cellNumber < 10 ? "0" : "") + cellNumber + ") ");
                 } else {
-                    System.out.print("  "+board[row][col]+"  ");
+                    System.out.print("  " + board[row][col] + "  ");
                 }
                 cellNumber++;
             }
-            System.out.println();
+
+            // Print the right BLUE border
+            if (row >= 3 && row <= 6) {
+                System.out.println(" " + blue.charAt(row - 3));
+            } else {
+                System.out.println();
+            }
         }
+
+        // Print the bottom RED border
+        System.out.println("                     RED");
     }
+
 
     public void updateBoard(int move, char color) {
         if (move == 81) {
@@ -262,12 +293,24 @@ public class Client {
         }
     }
 
+    public int getHintMove() {
+        for (int i = 0; i <= 40; i++) {
+            if (isMoveValid(40-i)) {
+                return 40-i;
+            } else if (isMoveValid(40+i)) {
+                return 40+i;
+            }
+        }
+        return 0;
+    }
+
     public static void main(String[] args) {
         // Ref server: 130.89.253.64 port 44445
         // local:  localhost port 8888
 
         try {
-            Client client = new Client("130.89.253.64", 44445);
+            Client client = new Client("localhost", 8888);
+//            Client client = new Client("130.89.253.64", 44445);
             client.start();
         } catch (Exception e) {
             e.printStackTrace();

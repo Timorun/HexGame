@@ -1,12 +1,18 @@
 package hexgame.server;
 import java.net.*;
 import java.io.*;
+import java.util.Scanner;
 
 public class ServerMain {
-    private static final int PORT = 8888;
+    private static int PORT;
 
     public static void main(String[] args) {
         ClientManager clientManager = new ClientManager();
+        Scanner input = new Scanner(System.in);
+
+        System.out.println("What PORT would you like to use ?");
+        PORT = input.nextInt();
+
 
         try (ServerSocket serverSocket = new ServerSocket(PORT)) {
             System.out.println("Server started on port " + PORT);
@@ -16,7 +22,7 @@ public class ServerMain {
                 new Thread(clientSession).start();
             }
         } catch (IOException e) {
-            e.printStackTrace();
+            System.out.println("Invalid Port");
         }
     }
 }
