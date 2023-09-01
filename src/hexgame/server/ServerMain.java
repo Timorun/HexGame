@@ -1,11 +1,21 @@
 package hexgame.server;
+
 import java.net.*;
 import java.io.*;
 import java.util.Scanner;
 
+/**
+ * The main entry point for the Hex game server.
+ * Initializes the server and listens for incoming client connections.
+ */
 public class ServerMain {
     private static int PORT;
 
+    /**
+     * The main method for the server application.
+     *
+     * @param args Command-line arguments (not used).
+     */
     public static void main(String[] args) {
         ClientManager clientManager = new ClientManager();
         Scanner input = new Scanner(System.in);
@@ -26,4 +36,3 @@ public class ServerMain {
         }
     }
 }
-

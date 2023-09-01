@@ -7,6 +7,11 @@ import java.util.Set;
 
 import static java.util.Arrays.copyOf;
 
+/**
+ * The Board class manages the state of the Hex game board.
+ * It provides methods to place pieces, check for a win, and get the current board state.
+ *
+ */
 public class Board {
     private final int size = 9;
     private char[][] fields;
@@ -15,13 +20,21 @@ public class Board {
     public final char BLUE = 'B';
     private boolean[][] visited;
 
+    /**
+     * Constructor
+     */
     public Board() {
         fields = new char[size][size];
         visited = new boolean[size][size];
         initializeBoard();
     }
 
-    // For use in AI to clone board
+    /**
+     * Constructor used in GreedyAI when having to attempt moves on new boards
+     * Used to build board with preset fields
+     *
+     * @precondition fields 9x9 char and visited9x9 boolean
+     */
     public Board(char[][] clonefields, boolean[][] clonevisited) {
         fields = clonefields;
         visited = clonevisited;
@@ -29,6 +42,11 @@ public class Board {
 
 
 
+    /**
+     * initializeBoard method.
+     *
+     * @precondition board != null
+     */
     private void initializeBoard() {
         for (int i = 0; i < size; i++) {
             for (int j = 0; j < size; j++) {
@@ -38,12 +56,20 @@ public class Board {
         }
     }
 
+    /**
+     * isValidMove method, check if move is legal
+     */
     public boolean isValidMove(int move) {
         int row = move / size;
         int col = move % size;
         return row >= 0 && row < size && col >= 0 && col < size && fields[row][col] == EMPTY;
     }
 
+    /**
+     * placePiece method. Places a piece on the board
+     *
+     * @precondition board != null, move between 0 and 81, char 'R' or 'B'
+     */
     public boolean placePiece(int move, char playercol) {
         int row = move / size;
         int col = move % size;
@@ -54,6 +80,11 @@ public class Board {
         return false;
     }
 
+    /**
+     * Depth-First Search method.
+     * Check whether a path exists from the current cell (x, y) to either the last row (if the player is RED) or the last column (if the player is BLUE).
+     *
+     */
     private boolean dfs(int x, int y, char player) {
         if (x < 0 || x >= size || y < 0 || y >= size || visited[x][y] || fields[x][y] != player) {
             return false;
@@ -71,6 +102,10 @@ public class Board {
                 dfs(x + 1, y - 1, player) || dfs(x - 1, y + 1, player);
     }
 
+    /**
+     * checkWin method.
+     * Checks if player has won the game
+     */
     public boolean checkWin(char player) {
         for (int i = 0; i < size; i++) {
             for (int j = 0; j < size; j++) {
@@ -95,6 +130,12 @@ public class Board {
         return false;
     }
 
+    /**
+     * getCurrentFields method.
+     * Get a deepcopy of 2d array fields
+     *
+     * @precondition fields != null
+     */
     public char[][] getCurrentFields() {
         char[][] fieldscopy = new char[9][9];
 
@@ -106,6 +147,12 @@ public class Board {
         return fieldscopy;
     }
 
+    /**
+     * getVisited method.
+     * Get a deepcopy of 2d array visited
+     *
+     * @precondition visited != null
+     */
     public boolean[][] getVisited() {
         boolean[][] visitedcopy = new boolean[9][9];
 
@@ -117,6 +164,13 @@ public class Board {
         return visitedcopy;
     }
 
+    /**
+     * swapMove method.
+     * Method taking position of the firstmove made as parameter and swapping it with mirror position to a Blue field
+     * As red player always goes first and swap can only be done by Blue.
+     *
+     * @precondition board != null, move between 0 and 80
+     */
     public void swapMove(int move) {
         int row = move / size;
         int col = move % size;
@@ -126,13 +180,25 @@ public class Board {
         }
     }
 
-    // Helper function to check if a cell is within board and has the player's color
+    /**
+     * isValid method.
+     * Helper function to check if a cell is within board and has the player's color
+     *
+     * @precondition board != null
+     * @postcondition true
+     */
     private boolean isValid(int x, int y, char color) {
         return x >= 0 && y >= 0 && x < 9 && y < 9 && fields[x][y] == color;
     }
 
-    // DFS function to find the longest path starting from (x, y)
-    private int dfs(int x, int y, char color, Set<String> visited) {
+    /**
+     * dfs method.
+     *
+     * Instead of just checking if a path exists for a player to reach the last row or column,
+     * this version calculates the maximum length of a path that starts from the cell (x, y) for a player with a specific color (RED or BLUE).
+     *
+     */
+    private int dfslongestpath(int x, int y, char color, Set<String> visited) {
         String key = x + "," + y;
         if (visited.contains(key)) {
             return 0;
@@ -149,14 +215,20 @@ public class Board {
             int newX = x + move[0];
             int newY = y + move[1];
             if (isValid(newX, newY, color)) {
-                maxLength = Math.max(maxLength, 1 + dfs(newX, newY, color, visited));
+                maxLength = Math.max(maxLength, 1 + dfslongestpath(newX, newY, color, visited));
             }
         }
 
         return maxLength;
     }
 
-    // Method to find the longest path for a given color
+    /**
+     * findLongestPath
+     * Method to find the longest path for a given color
+     *
+     * @precondition board != null
+     * @postcondition true
+     */
     public int findLongestPath(char color) {
         int longestPath = 0;
         Set<String> visited = new HashSet<>();
@@ -165,7 +237,7 @@ public class Board {
             for (int j = 0; j < 9; j++) {
                 if (fields[i][j] == color) {
                     visited.clear();
-                    longestPath = Math.max(longestPath, dfs(i, j, color, visited));
+                    longestPath = Math.max(longestPath, dfslongestpath(i, j, color, visited));
                 }
             }
         }
@@ -173,7 +245,14 @@ public class Board {
         return longestPath;
     }
 
-    // Method to count the number of pieces for a color
+
+    /**
+     * countPieces method.
+     * Method to count the number of pieces on the board for a given color
+     *
+     * @precondition board != null
+     * @postcondition true
+     */
     public int countPieces(char color) {
         int count = 0;
         for (int row = 0; row < fields.length; row++) {
@@ -186,6 +265,12 @@ public class Board {
         return count;
     }
 
+    /**
+     * getAvailableMoves method.
+     *
+     * @precondition board != null
+     * @postcondition true
+     */
     public List<Integer> getAvailableMoves() {
         List<Integer> availableMoves = new ArrayList<>();
         int size = 9;

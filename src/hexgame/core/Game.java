@@ -1,5 +1,12 @@
 package hexgame.core;
 
+/**
+ * The Game class manages the overall state and rules of the Hex game.
+ * It provides methods to make moves, switch turns, and determine the winner.
+ *
+ * @invariant board != null && playerRed != null && playerBlue != null
+ */
+
 public class Game {
     private Board board;
     private Player playerRed;
@@ -8,6 +15,12 @@ public class Game {
     private int previousMove;
     private boolean canSwap = true;
 
+
+    /**
+     * Constructor for the Game class.
+     *
+     * @precondition redPlayerName != null && bluePlayerName != null
+     */
     public Game(String redPlayerName, String bluePlayerName) {
         this.board = new Board();
         this.playerRed = new Player(redPlayerName, 'R');
@@ -15,11 +28,13 @@ public class Game {
         this.currentPlayer = playerRed;  // Red starts
     }
 
-    public void initializeGame() {
-        board = new Board();
-        currentPlayer = playerRed;
-    }
 
+    /**
+     * swapPlayers method.
+     *
+     * @precondition board != null && playerRed != null && playerBlue != null
+     * @postcondition true
+     */
     private void swapPlayers() {
         if (currentPlayer == playerRed) {
             currentPlayer = playerBlue;
@@ -28,6 +43,12 @@ public class Game {
         }
     }
 
+    /**
+     * makeMove method.
+     * Return true or false depending if move is legal and has been made
+     *
+     * @precondition board != null && playerRed != null && playerBlue != null
+     */
     public boolean makeMove(int move) {
         if (move == 81 && canSwap) {  // Check if the move is the special swap move and if a swap is allowed
             board.swapMove(previousMove);  // Swap the previous move
@@ -48,6 +69,13 @@ public class Game {
         return false;
     }
 
+    /**
+     * isGameOver method.
+     * Method to check if game is finished in the clientsession class
+     * Swap players and back because its called after having made a move which automatically switches the players
+     *
+     * @precondition board != null && playerRed != null && playerBlue != null
+     */
     public boolean isGameOver() {
         swapPlayers();
         boolean win = board.checkWin(currentPlayer.getColor());
@@ -55,23 +83,23 @@ public class Game {
         return win;
     }
 
-    public void printBoard() {
-        char[][] boardState = board.getCurrentFields();
-        for (int i = 0; i < boardState.length; i++) {
-            for (int j = 0; j < boardState[i].length; j++) {
-                System.out.print(boardState[i][j] + " ");
-            }
-            System.out.println();
-        }
-    }
-
+    /**
+     * getCurrentPlayer method.
+     * Returns currentplayer's name
+     *
+     * @precondition currentPlayer != null
+     */
     public String getCurrentPlayer() {
         return currentPlayer.getName();
     }
 
 
+    /**
+     * getGameOverReason method.
+     * Returns VICTORY or DRAW depending on if there are still moves possible
+     *
+     */
     public String getGameOverReason() {
-        //need to handle DC
         for (int i = 0; i < 81; i++) {
             if (board.isValidMove(i)){
                 return "VICTORY";

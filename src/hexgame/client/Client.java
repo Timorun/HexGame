@@ -14,16 +14,41 @@ import java.util.Arrays;
 
 import static java.lang.System.exit;
 
+/**
+ * The Client class handles client-side functionality for the Hex game.
+ * It is responsible for connecting to the server and managing game state.
+ */
+/**
+ * Client method.
+ */
 public class Client {
+    /**
+     * socket; method.
+     */
     private Socket socket;
+    /**
+     * out; method.
+     */
     private PrintWriter out;
+    /**
+     * in; method.
+     */
     private BufferedReader in;
+    /**
+     * scanner; method.
+     */
     private Scanner scanner;
+    /**
+     * inGame method.
+     */
     private boolean inGame = false;
     boolean swapmove = false;
 
     Board aiboard = new Board();
 
+    /**
+     * ipAddress, method.
+     */
     public Client(String ipAddress, int port) throws Exception {
         socket = new Socket(ipAddress, port);
         out = new PrintWriter(socket.getOutputStream(), true);
@@ -39,6 +64,9 @@ public class Client {
     boolean aichosen = false;
     boolean useai = false;
     AI ai = null;
+    /**
+     * start method.
+     */
     public void start() throws Exception {
         // Main loop for server commands
         new Thread(() -> {
@@ -152,6 +180,9 @@ public class Client {
         }
     }
 
+    /**
+     * isMoveValid method to check locally if move is valid before sending to server
+     */
     public boolean isMoveValid(int move) {
         if (move == 81) {
             return swapmove;
@@ -169,6 +200,11 @@ public class Client {
     char mycolor = 'B';
     char opcolor = 'R';
     int lastmove = 0; //to know incase swap move
+    /**
+     * handleServerCommand method
+     * Which is ran from the seperate thread
+     * Parsing the commands received from server
+     */
     private void handleServerCommand(String command) throws Exception {
 //        System.out.println(command);
         if (command == null) {
@@ -285,7 +321,12 @@ public class Client {
         }
     }
 
+
     private char[][] clientboard;
+
+    /**
+     * initBoard method to reset board
+     */
     public void initBoard() {
         clientboard = new char[9][9];
         for (char[] row : clientboard) {
@@ -293,6 +334,9 @@ public class Client {
         }
     }
 
+    /**
+     * print board to console
+     */
     public void printBoard() {
         int cellNumber = 0;
 
@@ -332,6 +376,9 @@ public class Client {
     }
 
 
+    /**
+     * updateBoard method to update board to display in console
+     */
     public void updateBoard(int move, char color) {
         if (move == 81) {
             move = lastmove;
@@ -347,6 +394,10 @@ public class Client {
     }
 
 
+    /**
+     * sendCommand method
+     * Sends a command to out printwriter
+     */
     private void sendCommand(String command) throws InterruptedException {
         out.println(command);
         synchronized (lock) {
@@ -354,6 +405,9 @@ public class Client {
         }
     }
 
+    /**
+     * getHintMove method providing a valid move as close to the center as possible
+     */
     public int getHintMove() {
         for (int i = 0; i <= 40; i++) {
             if (isMoveValid(40-i)) {
@@ -365,6 +419,10 @@ public class Client {
         return 0;
     }
 
+    /**
+     * Main method to run
+     * Set IP address and port of server to connect to
+     */
     public static void main(String[] args) {
         // Ref server: 130.89.253.64 port 44445
         // local:  localhost port 8888
