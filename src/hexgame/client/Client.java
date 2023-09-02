@@ -421,15 +421,21 @@ public class Client {
 
     /**
      * Main method to run
-     * Set IP address and port of server to connect to
+     * Prompt to set IP address and port of server to connect to
      */
     public static void main(String[] args) {
         // Ref server: 130.89.253.64 port 44445
         // local:  localhost port 8888
 
+        Scanner input = new Scanner(System.in);
+        System.out.println("What ipadress would you like to connect to ?");
+        String ipaddress = input.nextLine();
+
+        System.out.println("What PORT would you like to use ?");
+        int port = input.nextInt();
+
         try {
-//            Client client = new Client("localhost", 8888);
-            Client client = new Client("130.89.253.64", 44445);
+            Client client = new Client(ipaddress, port);
             client.start();
         } catch (Exception e) {
             e.printStackTrace();
