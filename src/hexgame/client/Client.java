@@ -353,6 +353,9 @@ public class Client {
                 System.out.print("  ");
             }
 
+            for (int i = 0; i<row; i++){
+                System.out.print(" ");
+            }
             // Print the board cells
             for (int col = 0; col < 9; col++) {
                 if (clientboard[row][col] == '.') {
@@ -372,7 +375,7 @@ public class Client {
         }
 
         // Print the bottom RED border
-        System.out.println("                     RED");
+        System.out.println("                            RED");
     }
 
 
@@ -429,7 +432,7 @@ public class Client {
 
         Scanner input = new Scanner(System.in);
         System.out.println("What ipadress would you like to connect to ?");
-        String ipaddress = input.nextLine();
+        String ipaddress = new String(input.nextLine());
 
         System.out.println("What PORT would you like to use ?");
         int port = input.nextInt();
