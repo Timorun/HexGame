@@ -5,7 +5,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import static java.util.Arrays.copyOf;
 
 /**
  * The Board class manages the state of the Hex game board.

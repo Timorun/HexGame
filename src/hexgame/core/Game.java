@@ -101,7 +101,7 @@ public class Game {
      */
     public String getGameOverReason() {
         for (int i = 0; i < 81; i++) {
-            if (board.isValidMove(i)){
+            if (board.isValidMove(i)) {
                 return "VICTORY";
             }
         }
